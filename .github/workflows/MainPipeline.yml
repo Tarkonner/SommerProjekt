@@ -33,11 +33,11 @@ jobs:
 
     # Docker server image build
     - name: Build server Docker image
-      run: docker build -t my-server ./server
+      run: docker build -t my-server ./Server
 
     # Docker client image build
     - name: Build client Docker image
-      run: docker build -t my-client ./client
+      run: docker build -t my-client ./Client
 
     # Create Docker network for communication
     - name: Create Docker network
