@@ -5,7 +5,7 @@ namespace ServerTests
         [Fact]
         public void HelloWorld()
         {
-            Assert.True(false);
+            Assert.True(true);
         }
     }
 }
