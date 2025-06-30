@@ -8,11 +8,57 @@ on:
 
 jobs:
 
-  build:
-
+  test-and-build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Checkout repository                     
+      uses: actions/checkout@v4
+
+    # C#
+    - name: Set up .NET 8                            
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    # Restore NuGet packages                         
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    # Run unit tests                                 
+    - name: Run unit tests
+      run: |
+        dotnet test ./ServerTests/ServerTests.csproj
+        dotnet test ./ClientTests/ClientTests.csproj
+
+    # Docker server image build
+    - name: Build server Docker image
+      run: docker build -t my-server ./server
+
+    # Docker client image build
+    - name: Build client Docker image
+      run: docker build -t my-client ./client
+
+    # Create Docker network for communication
+    - name: Create Docker network
+      run: docker network create test-net
+
+    # Start server container in background
+    - name: Start server container
+      run: docker run -d --name server --network test-net my-server
+
+    # Wait a few seconds for the server to start
+    - name: Wait for server to initialize
+      run: sleep 5
+
+    # Run first client container
+    - name: Run client container 1
+      run: docker run --network test-net my-client
+
+    # Run second client container
+    - name: Run client container 2
+      run: docker run --network test-net my-client
+
+    # Optionally output server logs
+    - name: Print server logs (optional)
+      run: docker logs server
