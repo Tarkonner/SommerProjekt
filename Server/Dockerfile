@@ -1,38 +1,29 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
+# Use the ASP.NET runtime image as the base for running the app
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS with-node
-RUN apt-get update
-RUN apt-get install curl
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash
-RUN apt-get -y install nodejs
-
-
-FROM with-node AS build
+# Use the SDK image to build the app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Client/Client.Server/Client.Server.csproj", "Client/Client.Server/"]
-COPY ["client.client/client.client.esproj", "client.client/"]
-RUN dotnet restore "./Client/Client.Server/Client.Server.csproj"
-COPY . .
-WORKDIR "/src/Client/Client.Server"
-RUN dotnet build "./Client.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Copy only the server project file and restore dependencies
+COPY ["Server/Server.csproj", "Server/"]
+RUN dotnet restore "Server/Server.csproj"
+
+# Copy all source files and build the project
+COPY ./Server ./Server
+WORKDIR "/src/Server"
+RUN dotnet build "Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# Publish the app to a folder for the final image
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Client.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Final stage: create the runtime image
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Client.Server.dll"]
+ENTRYPOINT ["dotnet", "Server.dll"]
