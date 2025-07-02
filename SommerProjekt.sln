@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "E2E_Testing", "E2E_Testing\E2E_Testing.csproj", "{103FC4C2-8E9B-453D-8ADD-798D93AADA98}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Connection", "Connection\Connection.csproj", "{1BB57D71-B964-48FB-BA1C-D416F99039F8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConnectionTests", "ConnectionTests\ConnectionTests.csproj", "{A5B696AF-DEAC-49E7-B03C-C685A780EE1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{103FC4C2-8E9B-453D-8ADD-798D93AADA98}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{103FC4C2-8E9B-453D-8ADD-798D93AADA98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{103FC4C2-8E9B-453D-8ADD-798D93AADA98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BB57D71-B964-48FB-BA1C-D416F99039F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BB57D71-B964-48FB-BA1C-D416F99039F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BB57D71-B964-48FB-BA1C-D416F99039F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BB57D71-B964-48FB-BA1C-D416F99039F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5B696AF-DEAC-49E7-B03C-C685A780EE1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5B696AF-DEAC-49E7-B03C-C685A780EE1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5B696AF-DEAC-49E7-B03C-C685A780EE1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5B696AF-DEAC-49E7-B03C-C685A780EE1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
