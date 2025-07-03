@@ -4,100 +4,82 @@ namespace Connection
 {
     public class TcpConnection : IConnection
     {
-        public readonly Socket _socket;
+        public NetworkStream stream { get; private set; }
+        public TcpClient client { get; private set; }
 
-        public TcpConnection()
-        {
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        }
-
-
-        public void Connect(string host, int port)
-        {
-            try
-            {
-                _socket.Connect(host, port);
-            }
-            catch (SocketException e)
-            {
-                throw new Exception($"Failed to connect to {host}:{port}", e);
-            }
-        }
-
-        public void Disconnect()
-        {
-            _socket?.Close();
-        }
-
-        public byte[] Receive(int bufferSize)
-        {
-            if (!IsSocketConnected())
-                throw new InvalidOperationException("Not connected to server");
-
-            try
-            {
-                var buffer = new byte[bufferSize];
-                int totalBytesReceived = 0;
-
-                // Receive data in chunks until no more data is available
-                while (_socket.Poll(1000, SelectMode.SelectRead))
-                {
-                    if (totalBytesReceived == buffer.Length)
-                    {
-                        Array.Resize(ref buffer, buffer.Length * 2);
-                    }
-
-                    int bytesRead = _socket.Receive(buffer, totalBytesReceived, buffer.Length - totalBytesReceived, SocketFlags.None);
-
-                    if (bytesRead == 0)
-                        throw new SocketException((int)SocketError.ConnectionReset);
-
-                    totalBytesReceived += bytesRead;
-                }
-
-                // Trim the buffer to actual received size
-                byte[] result = new byte[totalBytesReceived];
-                Array.Copy(buffer, result, totalBytesReceived);
-                return result;
-            }
-            catch (SocketException ex)
-            {
-                throw new Exception("Failed to receive data", ex);
-            }
-        }
-
-        public void Send(byte[] data)
-        {
-            if (!IsSocketConnected())
-                throw new InvalidOperationException("Not connected to server");
-
-            try
-            {
-                // Send the entire data array
-                int totalBytesSent = 0;
-                while (totalBytesSent < data.Length)
-                {
-                    int bytesSent = _socket.Send(data, totalBytesSent, data.Length - totalBytesSent, SocketFlags.None);
-                    if (bytesSent == 0)
-                        throw new SocketException((int)SocketError.ConnectionReset);
-                    totalBytesSent += bytesSent;
-                }
-            }
-            catch (SocketException ex)
-            {
-                throw new Exception("Failed to send data", ex);
-            }
-        }
 
         public bool IsSocketConnected()
         {
             try
             {
-                return !(_socket.Poll(1, SelectMode.SelectRead) && _socket.Available == 0);
+                Socket socket = client.Client;
+                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
             }
             catch (Exception)
             {
                 return false;
+            }
+        }
+
+        public async Task Connect(string host, int port)
+        {
+            try
+            {
+                client = new TcpClient();
+                await client.ConnectAsync(host, port);
+                stream = client.GetStream();
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Failed to connect to {host}:{port}", e);
+            }
+        }
+
+        public async Task SendAsync(byte[] data)
+        {
+            if (stream == null)
+                throw new InvalidOperationException("Not connected");
+
+            await stream.WriteAsync(data, 0, data.Length);
+            await stream.FlushAsync();
+        }
+
+        public async Task<byte[]> ReceiveAsync(int bufferSize)
+        {
+            if (stream == null)
+                throw new InvalidOperationException("Not connected");
+
+            var buffer = new byte[bufferSize];
+            int bytesRead = await stream.ReadAsync(buffer, 0, bufferSize);
+
+            if (bytesRead == 0)
+            {
+                // Connection closed by remote host
+                return Array.Empty<byte>();
+            }
+
+            // Return the exact data read
+            if (bytesRead == bufferSize)
+                return buffer;
+
+            var result = new byte[bytesRead];
+            Array.Copy(buffer, result, bytesRead);
+            return result;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (stream != null)
+            {
+                await stream.DisposeAsync();
+                stream = null;
+            }
+
+            if (client != null)
+            {
+                client.Close();     // Gracefully close connection
+                client.Dispose();   // Dispose unmanaged resources
+                client = null;
             }
         }
     }

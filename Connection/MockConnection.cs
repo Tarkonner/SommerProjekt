@@ -13,35 +13,38 @@ namespace Connection
         public byte[] LastReceivedData { get; set; }
         public bool IsDisposed { get; private set; }
 
-        public void Connect(string host, int port)
+        // Async Connect
+        public Task Connect(string host, int port)
         {
             IsConnected = true;
+            return Task.CompletedTask;
         }
 
-        public void Send(byte[] data)
+        // Async Send
+        public Task SendAsync(byte[] data)
         {
             if (!IsConnected)
                 throw new InvalidOperationException("Not connected");
 
             SentData.Add(data);
+            return Task.CompletedTask;
         }
 
-        public byte[] Receive(int bufferSize)
+        // Async Receive
+        public Task<byte[]> ReceiveAsync(int bufferSize)
         {
             if (!IsConnected)
                 throw new InvalidOperationException("Not connected");
 
-            return LastReceivedData ?? Array.Empty<byte>();
+            return Task.FromResult(LastReceivedData ?? Array.Empty<byte>());
         }
 
-        public void Disconnect()
-        {
-            IsConnected = false;
-        }
-
-        public void Dispose()
+        // Async Dispose
+        public ValueTask DisposeAsync()
         {
             IsDisposed = true;
+            IsConnected = false;
+            return ValueTask.CompletedTask;
         }
     }
 }

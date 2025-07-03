@@ -24,7 +24,8 @@ namespace ConnectionTests
             TestServer testServer = new TestServer();
             testServer.Start();
 
-            bool isConnected = testServer.connection._socket.Poll(0, SelectMode.SelectRead);
+            Socket socket = testServer.connection.client.Client;
+            bool isConnected = socket.Poll(0, SelectMode.SelectRead);
             Assert.False(isConnected);
 
             testServer.Stop();
@@ -35,7 +36,7 @@ namespace ConnectionTests
         {
             TestServer testServer = new TestServer();
 
-            testServer.connection.Disconnect();
+            testServer.Stop();
 
             Assert.False(testServer.connection.IsSocketConnected());
         }
@@ -48,7 +49,7 @@ namespace ConnectionTests
                 server.Start();
 
                 var testData = Encoding.UTF8.GetBytes("Hello");
-                server.connection.Send(testData);
+                server.connection.SendAsync(testData);
 
                 // Wait with timeout
                 var timeout = TimeSpan.FromSeconds(5);

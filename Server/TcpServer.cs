@@ -16,6 +16,13 @@ namespace Server
         static readonly List<TcpClient> clients = new List<TcpClient>();
         static readonly object clientsLock = new object();
 
+        public List<string> messages = new List<string>();
+
+        public int numberOfClient
+        {
+            get { return clients.Count; }
+        }
+
         public void Start()
         {
             try
@@ -53,14 +60,14 @@ namespace Server
             }
         }
 
-        static void AcceptClients()
+        void AcceptClients()
         {
+            while(running)
+            {
+
+            }
         }
 
-        static void HandleClient(TcpClient client)
-        {
-
-        }
 
         static void BroadcastMessage(string message)
         {

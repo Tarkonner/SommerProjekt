@@ -52,7 +52,7 @@ namespace ConnectionTests
         public void Stop()
         {
             _listener.Stop();
-            connection.Disconnect();
+            connection.DisposeAsync();
         }
 
         public void Dispose()

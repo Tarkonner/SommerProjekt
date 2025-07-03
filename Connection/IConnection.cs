@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 
 namespace Connection
 {
-    public interface IConnection
+    public interface IConnection : IAsyncDisposable
     {
-        void Connect(string host, int port);
-        void Send(byte[] data);
-        byte[] Receive(int bufferSize);
-        void Disconnect();
+        Task Connect(string host, int port);
+        Task SendAsync(byte[] data);
+        Task<byte[]> ReceiveAsync(int bufferSize);
     }
 }
