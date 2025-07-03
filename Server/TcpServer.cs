@@ -3,11 +3,11 @@ using System.Net.Sockets;
 
 namespace Server
 {
-    public class ServerLogic
+    public class TcpServer : IDisposable
     {
         static TcpListener server = null;
 
-        int port = 12000;
+        int port = 60000;
         static IPAddress localAddress = IPAddress.Parse("127.0.0.1");
 
         bool running = true;
@@ -15,7 +15,6 @@ namespace Server
         // Thread-safe list of connected clients
         static readonly List<TcpClient> clients = new List<TcpClient>();
         static readonly object clientsLock = new object();
-
 
         public void Start()
         {
@@ -71,6 +70,11 @@ namespace Server
         public void StopServer()
         {
             running = false;
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

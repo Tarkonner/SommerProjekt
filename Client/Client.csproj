@@ -16,4 +16,8 @@
     <Folder Include="Interfaces\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Connection\Connection.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -14,7 +14,7 @@ public class Program()
 
         var app = builder.Build();
 
-        ServerLogic server = new ServerLogic();
+        TcpServer server = new TcpServer();
         server.Start();
 
         app.UseDefaultFiles();
