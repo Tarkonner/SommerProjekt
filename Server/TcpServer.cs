@@ -23,7 +23,18 @@ namespace Server
             get { return clients.Count; }
         }
 
+        Thread serverThread;
+        Thread acceptThread;
+        Thread broadcastThread;
+
         public void Start()
+        {
+            //Make thread for server
+            serverThread = new Thread(ServerWork);
+            serverThread.Start();
+        }
+
+        private void ServerWork()
         {
             try
             {
@@ -32,23 +43,13 @@ namespace Server
                 Console.WriteLine($"Server started on {localAddress}:{port}");
 
                 // Start a thread to accept clients
-                Thread acceptThread = new Thread(AcceptClients);
+                acceptThread = new Thread(AcceptClients);
                 acceptThread.IsBackground = true;
                 acceptThread.Start();
 
-                // Main thread handles sending messages from console to all clients
-                while (running)
-                {
-                    string message = Console.ReadLine();
-
-                    if (message.ToLower() == "exit")
-                    {
-                        running = false;
-                        break;
-                    }
-
-                    BroadcastMessage(message);
-                }
+                broadcastThread = new Thread(Brodcast);
+                broadcastThread.IsBackground = true;
+                broadcastThread.Start();
             }
             catch (Exception e)
             {
@@ -56,32 +57,38 @@ namespace Server
             }
             finally
             {
-                StopServer();
+                Dispose();
             }
         }
 
         void AcceptClients()
         {
-            while(running)
+            while (running) 
+            {
+
+            }
+        }
+
+        void Brodcast()
+        {
+            while (running)
             {
 
             }
         }
 
 
-        static void BroadcastMessage(string message)
+        public void BroadcastMessage(string message)
         {
-        }
-
-
-        public void StopServer()
-        {
-            running = false;
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            running = false;
+
+            acceptThread.Join();
+            broadcastThread.Join();
+            serverThread.Join();
         }
     }
 }

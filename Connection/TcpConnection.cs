@@ -69,6 +69,13 @@ namespace Connection
 
         public async ValueTask DisposeAsync()
         {
+            if (client?.Connected ?? false)
+            {
+                client.Close();
+                stream = null;
+                client = null;
+            }
+
             if (stream != null)
             {
                 await stream.DisposeAsync();
