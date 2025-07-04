@@ -7,33 +7,36 @@ namespace Connection
         public NetworkStream stream { get; private set; }
         public TcpClient client { get; private set; }
 
-
-        public bool IsSocketConnected()
+        public TcpConnection(TcpClient existingClient)
         {
-            try
-            {
-                Socket socket = client.Client;
-                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            client = existingClient;
+            stream = client.GetStream();
+        }
+
+        public TcpConnection()
+        {
+            // empty constructor for client use
         }
 
         public async Task Connect(string host, int port)
         {
+            if (client != null)
+                throw new InvalidOperationException("Already connected.");
+
             try
             {
                 client = new TcpClient();
                 await client.ConnectAsync(host, port);
                 stream = client.GetStream();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                throw new Exception($"Failed to connect to {host}:{port}", e);
+                throw new Exception(ex.Message);
             }
+
+
         }
+
 
         public async Task SendAsync(byte[] data)
         {
@@ -90,4 +93,5 @@ namespace Connection
             }
         }
     }
+
 }

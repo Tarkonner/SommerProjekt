@@ -9,55 +9,83 @@ using System.Threading.Tasks;
 
 namespace ConnectionTests
 {
-    public class TestServer : IDisposable
+    public class TestServer : IAsyncDisposable
     {
-        private readonly TcpListener _listener;
-        public TcpConnection connection;
-        private readonly CancellationTokenSource _cts;
-        private Task _messageHandlingTask;
+        private bool running = true;
+
+        private TcpListener _listener;
+        public List<TcpConnection> clients = new List<TcpConnection>();
+
+        Thread accpetThread;
+
 
         public List<string> messages { get; private set; } = new List<string>();
 
-        public TestServer()
-        {
-            _listener = new TcpListener(IPAddress.Loopback, 50000);
-            connection = new TcpConnection();
-            _cts = new CancellationTokenSource();
-        }
 
-        public void Start()
+        public Task StartListeningAsync(int port)
         {
+            _listener = new TcpListener(IPAddress.Loopback, port);
             _listener.Start();
-            connection.Connect("127.0.0.1", 50000);
 
-            //Sending message
-            _messageHandlingTask = Task.Run(async () =>
+            accpetThread = new Thread(AcceptClients);
+            accpetThread.Start();
+
+            return Task.CompletedTask;
+        }
+
+        public async void AcceptClients()
+        {
+            while(running)
             {
-                while (_listener.Server.IsBound && !_cts.Token.IsCancellationRequested)
-                {
-                    if (_cts.Token.IsCancellationRequested)
-                        break;
+                // Accept client asynchronously
+                TcpClient tcpClient = await _listener.AcceptTcpClientAsync();
 
-                    var client = await _listener.AcceptTcpClientAsync(_cts.Token);
-                    using (var stream = client.GetStream())
-                    {
-                        var buffer = new byte[1024];
-                        var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
-                        messages.Add(Encoding.UTF8.GetString(buffer, 0, bytesRead));
-                    }
-                }
-            }, _cts.Token);
+                // Wrap in TcpConnection
+                var connection = new TcpConnection(tcpClient);
+
+                // Track connection if needed
+                clients.Add(connection);
+
+                // Handle client asynchronously (no new thread, just a background task)
+                _ = HandleClientAsync(connection);
+            }
         }
 
-        public void Stop()
+        private async Task HandleClientAsync(TcpConnection connection)
         {
-            _listener.Stop();
-            connection.DisposeAsync();
+            try
+            {
+                var data = await connection.ReceiveAsync(1024);
+
+                string message = Encoding.UTF8.GetString(data);
+                messages.Add(message);
+
+                var response = Encoding.UTF8.GetBytes(message);
+                await connection.SendAsync(response);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Client error: {ex.Message}");
+            }
+            finally
+            {
+                await connection.DisposeAsync();
+                clients.Remove(connection);
+                Console.WriteLine("Client disconnected.");
+            }
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
-            Stop();
+            running = false;
+
+            foreach (TcpConnection item in clients)
+            {
+                await item.DisposeAsync();
+            }
+
+            _listener.Dispose();
+            accpetThread.Join();
         }
     }
 }

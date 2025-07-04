@@ -1,5 +1,7 @@
 using Connection;
 using Server;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 namespace ServerTests
@@ -15,13 +17,13 @@ namespace ServerTests
 
                 // Create multiple clients
                 int numberOfClients = 2;
+                var listerner = new TcpListener(IPAddress.Loopback, 50000);
                 var clients = new List<TcpConnection>();
 
                 // Connect all clients
                 for (int i = 0; i < numberOfClients; i++)
                 {
-                    var client = new TcpConnection();
-                    await client.Connect("127.0.0.1", 50000);
+                    var client = new TcpConnection(listerner.AcceptTcpClient());
                     clients.Add(client);
                 }
 
@@ -47,8 +49,8 @@ namespace ServerTests
             {
                 server.Start();
 
-                var client = new TcpConnection();
-                await client.Connect("127.0.0.1", 50000);
+                var listerner = new TcpListener(IPAddress.Loopback, 50000);
+                var client = new TcpConnection(listerner.AcceptTcpClient());
 
                 string message = "Message from client";
                 await client.SendAsync(Encoding.UTF8.GetBytes(message));
@@ -69,12 +71,12 @@ namespace ServerTests
 
                 int numberOfClients = 2;
                 var clients = new List<TcpConnection>();
+                var listerner = new TcpListener(IPAddress.Loopback, 50000);
 
                 // Connect all clients
                 for (int i = 0; i < numberOfClients; i++)
                 {
-                    var client = new TcpConnection();
-                    await client.Connect("127.0.0.1", 50000);
+                    var client = new TcpConnection(listerner.AcceptTcpClient());
                     clients.Add(client);
                 }
 

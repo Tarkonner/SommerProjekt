@@ -8,7 +8,6 @@ namespace Connection
 {
     public interface IConnection : IAsyncDisposable
     {
-        Task Connect(string host, int port);
         Task SendAsync(byte[] data);
         Task<byte[]> ReceiveAsync(int bufferSize);
     }
