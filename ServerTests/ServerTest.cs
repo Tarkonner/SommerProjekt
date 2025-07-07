@@ -24,9 +24,7 @@ namespace ServerTests
 
             TcpConnection client = new TcpConnection();
             await client.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
-
-            await WaitUntilAsync(() => tcpServer.numberOfClient == 1);
-
+            await Task.Delay(100);
             Assert.Equal(1, tcpServer.numberOfClient);
 
             await tcpServer.DisposeAsync();
@@ -42,9 +40,7 @@ namespace ServerTests
             await client1.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
             TcpConnection client2 = new TcpConnection();
             await client2.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
-
-            await WaitUntilAsync(() => tcpServer.numberOfClient == 2);
-
+            await Task.Delay(100);
             Assert.Equal(2, tcpServer.numberOfClient);
 
             await tcpServer.DisposeAsync();
@@ -77,8 +73,8 @@ namespace ServerTests
 
             // Assert - Check thread states before disposal
             Assert.False(server.serverThread.IsAlive);
-            Assert.False(server.acceptThread.IsAlive);
-            Assert.False(server.broadcastThread.IsAlive);
+            Assert.False(server.acceptTask.IsCompleted);
+            Assert.False(server.broadcastTask.IsCompleted);
 
             // Cleanup
             await server.DisposeAsync();

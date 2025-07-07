@@ -9,8 +9,8 @@ namespace Server
     {
         //Threads
         public Thread serverThread { get; private set; }
-        public Thread acceptThread { get; private set; }
-        public Thread broadcastThread { get; private set; }
+        public Task acceptTask { get; private set; }
+        public Task broadcastTask { get; private set; }
 
         private readonly TaskCompletionSource<bool> _acceptReady = new();
         private readonly TaskCompletionSource<bool> _broadcastReady = new();
@@ -27,7 +27,13 @@ namespace Server
 
         public int numberOfClient
         {
-            get { return clients.Count; }
+            get
+            {
+                lock (clients)
+                {
+                    return clients.Count;
+                }
+            }
         }
 
 
@@ -47,44 +53,50 @@ namespace Server
 
         private async void ServerWork()
         {
-            try
-            {
-                // StartAsync a thread to accept clients
-                acceptThread = new Thread(AcceptClients);
-                acceptThread.IsBackground = true;
-                acceptThread.Start();
+            // StartAsync a thread to accept clients
+            acceptTask = Task.Run(AcceptClients);
+            broadcastTask = Task.Run(Brodcast);
 
-                broadcastThread = new Thread(Brodcast);
-                broadcastThread.IsBackground = true;
-                broadcastThread.Start();
-            }
-            catch (Exception e)
+            while (running)
             {
-                Console.WriteLine("Exception: " + e);
-            }
-            finally
-            {
-                await DisposeAsync();
+
             }
         }
 
-        async void AcceptClients()
+        async Task AcceptClients()
         {
-            _acceptReady.TrySetResult(true);
 
             while (running) 
             {
-                // Accept client asynchronously
-                TcpClient tcpClient = await listerner.AcceptTcpClientAsync();
+                try
+                {
+                    _acceptReady.TrySetResult(true);
+                    TcpClient tcpClient = await listerner.AcceptTcpClientAsync();
 
-                // Wrap in TcpConnection
-                TcpConnection connection = new TcpConnection(tcpClient);
+                    TcpConnection connection = new TcpConnection(tcpClient);
 
-                // Track connection if needed
-                clients.Add(connection);
+                    lock (clients)
+                    {
+                        clients.Add(connection);
+                    }
 
-                // Handle client asynchronously (no new thread, just a background task)
-                _ = HandleClientAsync(connection);
+                    _ = HandleClientAsync(connection);
+                }
+                catch (SocketException ex) when (!running)
+                {
+                    // Expected when listener is stopped
+                    break;
+                }
+                catch (ObjectDisposedException) when (!running)
+                {
+                    // Also expected if listener is disposed
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Accept failed: {ex.Message}");
+                }
+
             }
         }
 
@@ -106,17 +118,20 @@ namespace Server
             finally
             {
                 await connection.DisposeAsync();
-                clients.Remove(connection);
+                lock (clients)
+                {
+                    clients.Remove(connection);
+                }
                 Console.WriteLine("Client disconnected.");
             }
         }
 
-        async void Brodcast()
+        async Task Brodcast()
         {
-            _broadcastReady.TrySetResult(true);
 
             while (running)
             {
+                _broadcastReady.TrySetResult(true);
 
             }
         }
@@ -130,6 +145,18 @@ namespace Server
         public async ValueTask DisposeAsync()
         {
             running = false;
+
+            listerner?.Stop();
+
+            if (acceptTask != null) await acceptTask;
+            if (broadcastTask != null) await broadcastTask;
+
+            foreach (var client in clients.ToList())
+            {
+                await client.DisposeAsync();
+            }
+
+            clients.Clear();
         }
 
 

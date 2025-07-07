@@ -20,7 +20,7 @@ namespace ConnectionTests
         public async Task ConnectToTestServerHasMessage()
         {
             int port = GetAvailablePort();
-            var testServer = new TestServer();
+            var testServer = new ServerToConnectionTest();
             var tcpConnection = new TcpConnection();
 
             try
@@ -49,7 +49,7 @@ namespace ConnectionTests
         public async Task GetMessageFromTestserver()
         {
             int port = GetAvailablePort();
-            var testServer = new TestServer();
+            var testServer = new ServerToConnectionTest();
             var tcpConnection = new TcpConnection();
 
             try
@@ -87,7 +87,7 @@ namespace ConnectionTests
         public async Task ConnectTwice_ThrowsInvalidOperationException()
         {
             int port = GetAvailablePort();
-            var testServer = new TestServer();
+            var testServer = new ServerToConnectionTest();
             var connection = new TcpConnection();
 
             try
@@ -127,7 +127,7 @@ namespace ConnectionTests
         public async Task ReceiveAfterServerDisconnect_ReturnsEmptyArray()
         {
             int port = GetAvailablePort();
-            var testServer = new TestServer();
+            var testServer = new ServerToConnectionTest();
             var connection = new TcpConnection();
 
             try
