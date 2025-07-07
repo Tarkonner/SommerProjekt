@@ -2,6 +2,8 @@ using Server;
 
 public class Program()
 {
+    static TcpServer tcpServer;
+
     static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +16,8 @@ public class Program()
 
         var app = builder.Build();
 
-        TcpServer server = new TcpServer();
-        server.Start();
+        tcpServer = new TcpServer();
+        tcpServer.StartAsync();
 
         app.UseDefaultFiles();
         app.UseStaticFiles();
@@ -36,6 +38,11 @@ public class Program()
         app.MapFallbackToFile("/index.html");
 
         app.Run();
+    }
+
+    public async void StopServer()
+    {
+        await tcpServer.Stop();
     }
 }
 
