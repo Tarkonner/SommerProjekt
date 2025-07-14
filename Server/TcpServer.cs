@@ -74,7 +74,7 @@ namespace Server
                     TcpClient tcpClient = await listerner.AcceptTcpClientAsync();
 
                     TcpConnection connection = new TcpConnection(tcpClient);
-
+                    connection.goingToDisconnect += DisconnectClient;
                     lock (clients)
                     {
                         clients.Add(connection);
@@ -159,6 +159,15 @@ namespace Server
             clients.Clear();
         }
 
+        public async void DisconnectClient(object? sender, TcpConnectionEventArgs e)
+        {
+            lock (clients)
+            {
+                clients.Remove(e.Connection);
+            }
+            e.Connection.goingToDisconnect -= DisconnectClient;
+        }
+
 
         public async Task Stop ()
         {
@@ -166,5 +175,7 @@ namespace Server
 
             await Task.Delay(TimeSpan.FromSeconds(1));
         }
+
+        
     }
 }

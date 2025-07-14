@@ -4,8 +4,11 @@ namespace Connection
 {
     public class TcpConnection : IConnection
     {
+        public event EventHandler<TcpConnectionEventArgs>? goingToDisconnect;
+
         public NetworkStream stream { get; private set; }
         public TcpClient client { get; private set; }
+
 
         public TcpConnection(TcpClient existingClient)
         {
@@ -15,7 +18,6 @@ namespace Connection
 
         public TcpConnection()
         {
-            // empty constructor for client use
         }
 
         public async Task Connect(string host, int port)
@@ -31,20 +33,27 @@ namespace Connection
             }
             catch (Exception ex)
             {
+                goingToDisconnect?.Invoke(this, new TcpConnectionEventArgs(this));
                 throw new Exception(ex.Message);
             }
-
-
         }
 
 
         public async Task SendAsync(byte[] data)
         {
-            if (stream == null)
-                throw new InvalidOperationException("Not connected");
+            try
+            {
+                if (stream == null)
+                    throw new InvalidOperationException("Not connected");
 
-            await stream.WriteAsync(data, 0, data.Length);
-            await stream.FlushAsync();
+                await stream.WriteAsync(data, 0, data.Length);
+                await stream.FlushAsync();
+            }
+            catch (Exception ex)
+            {
+                goingToDisconnect?.Invoke(this, new TcpConnectionEventArgs(this));
+                throw new Exception(ex.Message);
+            }
         }
 
         public async Task<byte[]> ReceiveAsync(int bufferSize)
@@ -52,26 +61,37 @@ namespace Connection
             if (stream == null)
                 throw new InvalidOperationException("Not connected");
 
-            var buffer = new byte[bufferSize];
-            int bytesRead = await stream.ReadAsync(buffer, 0, bufferSize);
-
-            if (bytesRead == 0)
+            try
             {
-                // Connection closed by remote host
-                return Array.Empty<byte>();
+                var buffer = new byte[bufferSize];
+                int bytesRead = await stream.ReadAsync(buffer, 0, bufferSize);
+
+                if (bytesRead == 0)
+                {
+                    // Connection closed by remote host
+                    return Array.Empty<byte>();
+                }
+
+                // Return the exact data read
+                if (bytesRead == bufferSize)
+                    return buffer;
+
+                var result = new byte[bytesRead];
+                Array.Copy(buffer, result, bytesRead);
+                return result;
             }
-
-            // Return the exact data read
-            if (bytesRead == bufferSize)
-                return buffer;
-
-            var result = new byte[bytesRead];
-            Array.Copy(buffer, result, bytesRead);
-            return result;
+            catch (Exception ex)
+            {
+                goingToDisconnect?.Invoke(this, new TcpConnectionEventArgs(this));
+                throw new Exception(ex.Message);
+            }
         }
+
 
         public async ValueTask DisposeAsync()
         {
+            goingToDisconnect?.Invoke(this, new TcpConnectionEventArgs(this));
+
             if (client?.Connected ?? false)
             {
                 client.Close();
@@ -94,4 +114,13 @@ namespace Connection
         }
     }
 
+    public class TcpConnectionEventArgs : EventArgs
+    {
+        public TcpConnection Connection { get; }
+
+        public TcpConnectionEventArgs(TcpConnection connection)
+        {
+            Connection = connection;
+        }
+    }
 }

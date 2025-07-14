@@ -56,6 +56,8 @@ namespace ServerTests
 
             await client.DisposeAsync();
 
+            Thread.Sleep(100);
+
             Assert.Equal(0, tcpServer.numberOfClient);
 
             await tcpServer.DisposeAsync();
@@ -71,10 +73,12 @@ namespace ServerTests
             // Act
             await server.Stop();
 
+            Thread.Sleep(100);
+
             // Assert - Check thread states before disposal
             Assert.False(server.serverThread.IsAlive);
-            Assert.False(server.acceptTask.IsCompleted);
-            Assert.False(server.broadcastTask.IsCompleted);
+            Assert.True(server.acceptTask.IsCompleted);
+            Assert.True(server.broadcastTask.IsCompleted);
 
             // Cleanup
             await server.DisposeAsync();
