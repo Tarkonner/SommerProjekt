@@ -31,7 +31,7 @@ namespace Connection
         }
 
         // Async Receive
-        public Task<byte[]> ReceiveAsync(int bufferSize)
+        public Task<byte[]> ReceiveAsync()
         {
             if (!IsConnected)
                 throw new InvalidOperationException("Not connected");

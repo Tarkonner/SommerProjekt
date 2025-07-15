@@ -61,7 +61,7 @@ namespace ConnectionTests
                 byte[] messageBytes = Encoding.UTF8.GetBytes(testMessage);
 
                 await tcpConnection.SendAsync(messageBytes);
-                var data = await tcpConnection.ReceiveAsync(1024);
+                var data = await tcpConnection.ReceiveAsync();
                 string message = Encoding.UTF8.GetString(data);
 
                 Assert.Equal(testMessage, message);
@@ -120,7 +120,7 @@ namespace ConnectionTests
             var connection = new TcpConnection();
 
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                connection.ReceiveAsync(1024));
+                connection.ReceiveAsync());
         }
 
         [Fact]
@@ -137,8 +137,8 @@ namespace ConnectionTests
 
                 await testServer.DisposeAsync(); // simulate server disconnect
 
-                var result = await connection.ReceiveAsync(1024);
-                Assert.Empty(result);
+                var result = await connection.ReceiveAsync();
+                Assert.Equal("Connection closed prematurely", result.ToString());
             }
             finally
             {

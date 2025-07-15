@@ -104,7 +104,7 @@ namespace Server
         {
             try
             {
-                var data = await connection.ReceiveAsync(1024);
+                var data = await connection.ReceiveAsync();
 
                 string message = Encoding.UTF8.GetString(data);
 

@@ -97,7 +97,7 @@ namespace ServerTests
 
             tcpServer.BroadcastMessage(message);
 
-            string gottenMessage = await client.ReceiveAsync();
+            byte[] gottenMessage = await client.ReceiveAsync();
         }
 
         [Fact]

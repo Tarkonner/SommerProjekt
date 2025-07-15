@@ -9,6 +9,6 @@ namespace Connection
     public interface IConnection : IAsyncDisposable
     {
         Task SendAsync(byte[] data);
-        Task<byte[]> ReceiveAsync(int bufferSize);
+        Task<byte[]> ReceiveAsync();
     }
 }
