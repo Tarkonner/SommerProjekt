@@ -1,4 +1,5 @@
 ﻿using Connection;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Server
         public Thread serverThread { get; private set; }
         public Task acceptTask { get; private set; }
         public Task broadcastTask { get; private set; }
+
 
         private readonly TaskCompletionSource<bool> _acceptReady = new();
         private readonly TaskCompletionSource<bool> _broadcastReady = new();
@@ -36,7 +38,8 @@ namespace Server
             }
         }
 
-
+        //Message database
+        private readonly ConcurrentQueue<string> broadcastQueue = new();
 
         public async Task StartAsync()
         {
@@ -53,14 +56,11 @@ namespace Server
 
         private async void ServerWork()
         {
-            // StartAsync a thread to accept clients
             acceptTask = Task.Run(AcceptClients);
             broadcastTask = Task.Run(Brodcast);
 
-            while (running)
-            {
-
-            }
+            // Just wait for the three background loops instead:
+            Task.WaitAll(acceptTask, broadcastTask);
         }
 
         async Task AcceptClients()
@@ -133,13 +133,35 @@ namespace Server
             {
                 _broadcastReady.TrySetResult(true);
 
+                if (broadcastQueue.TryDequeue(out var message))
+                {
+                    await BroadcastMessage(message);
+                }
+
+                // Throttle broadcasts to prevent overload
+                await Task.Delay(100);
             }
         }
 
 
-        public void BroadcastMessage(string message)
+        public async Task BroadcastMessage(string message)
         {
-
+            lock (clients)
+            {
+                foreach (var client in clients.ToList())
+                {
+                    try
+                    {
+                        var data = Encoding.UTF8.GetBytes(message);
+                        client.SendAsync(data);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Broadcast failed to client: {ex.Message}");
+                        // Consider removing failed client
+                    }
+                }
+            }
         }
 
         public async ValueTask DisposeAsync()

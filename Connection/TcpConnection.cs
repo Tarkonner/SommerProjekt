@@ -8,6 +8,8 @@ namespace Connection
 
         public event EventHandler<TcpConnectionEventArgs>? goingToDisconnect;
 
+        public CancellationTokenSource cancelToken { get; private set; } = new();
+
         public NetworkStream stream { get; private set; }
         public TcpClient client { get; private set; }
 
@@ -47,6 +49,9 @@ namespace Connection
         {
             try
             {
+                if(cancelToken.IsCancellationRequested)
+                    throw new InvalidOperationException("Connection canclet");
+
                 if (stream == null)
                     throw new InvalidOperationException("Not connected");
 
@@ -69,6 +74,9 @@ namespace Connection
         {
             if (stream == null)
                 throw new InvalidOperationException("Not connected");
+
+            if (cancelToken.IsCancellationRequested)
+                throw new InvalidOperationException("Connection canclet");
 
             try
             {
@@ -123,6 +131,8 @@ namespace Connection
 
         public async ValueTask DisposeAsync()
         {
+            cancelToken.Cancel();
+
             goingToDisconnect?.Invoke(this, new TcpConnectionEventArgs(this));
 
             if (client?.Connected ?? false)

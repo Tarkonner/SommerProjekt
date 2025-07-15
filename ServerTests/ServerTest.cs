@@ -1,5 +1,6 @@
 using Connection;
 using Server;
+using System.Text;
 
 namespace ServerTests
 {
@@ -95,7 +96,7 @@ namespace ServerTests
             TcpConnection client = new TcpConnection();
             await client.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
 
-            tcpServer.BroadcastMessage(message);
+            await tcpServer.BroadcastMessage(message);
 
             byte[] gottenMessage = await client.ReceiveAsync();
         }
@@ -103,13 +104,30 @@ namespace ServerTests
         [Fact]
         async Task BroadcastMessageToTwoClient()
         {
-            Assert.True(false);
+            string message = "Hello world";
+
+            TcpServer tcpServer = new TcpServer();
+            await tcpServer.StartAsync();
+
+            TcpConnection c1 = new TcpConnection();
+            await c1.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
+            TcpConnection c2 = new TcpConnection();
+            await c2.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
+
+
+            var receiveTasks = new[]
+            {
+                c1.ReceiveAsync(),
+                c2.ReceiveAsync()
+            };
+
+            await tcpServer.BroadcastMessage(message);
+
+            byte[][] payloads = await Task.WhenAll(receiveTasks);
+
+            Assert.All(payloads,
+                bytes => Assert.Equal(message, Encoding.UTF8.GetString(bytes)));
         }
 
-        [Fact]
-        async Task ListenToHearthBeat()
-        {
-            Assert.True(false);
-        }
     }
 }

@@ -135,10 +135,12 @@ namespace ConnectionTests
                 await testServer.StartListeningAsync(port);
                 await connection.Connect("127.0.0.1", port);
 
-                await testServer.DisposeAsync(); // simulate server disconnect
+                await connection.DisposeAsync();
 
-                var result = await connection.ReceiveAsync();
-                Assert.Equal("Connection closed prematurely", result.ToString());
+                var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    connection.ReceiveAsync());
+
+                Assert.Equal("Not connected", ex.Message);
             }
             finally
             {
