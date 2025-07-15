@@ -83,5 +83,33 @@ namespace ServerTests
             // Cleanup
             await server.DisposeAsync();
         }
+
+        [Fact]
+        async Task BroadcastMessageToOneClient()
+        {
+            string message = "Hello world";
+
+            TcpServer tcpServer = new TcpServer();
+            await tcpServer.StartAsync();
+
+            TcpConnection client = new TcpConnection();
+            await client.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
+
+            tcpServer.BroadcastMessage(message);
+
+            string gottenMessage = await client.ReceiveAsync();
+        }
+
+        [Fact]
+        async Task BroadcastMessageToTwoClient()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        async Task ListenToHearthBeat()
+        {
+            Assert.True(false);
+        }
     }
 }

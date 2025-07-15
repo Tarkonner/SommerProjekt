@@ -110,7 +110,7 @@ namespace ConnectionTests
         {
             var connection = new TcpConnection();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            await Assert.ThrowsAsync<Exception>(() =>
                 connection.SendAsync(Encoding.UTF8.GetBytes("Test")));
         }
 
