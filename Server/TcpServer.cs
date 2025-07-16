@@ -1,8 +1,8 @@
-﻿using Connection;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Connection;
 
 namespace Server
 {
@@ -13,20 +13,14 @@ namespace Server
         public Task acceptTask { get; private set; }
         public Task broadcastTask { get; private set; }
 
-
+        //Tells then Server is ready to take and sent
         private readonly TaskCompletionSource<bool> _acceptReady = new();
         private readonly TaskCompletionSource<bool> _broadcastReady = new();
         private Task ServerReady => Task.WhenAll(_acceptReady.Task, _broadcastReady.Task);
 
-
+        //Clients
         TcpListener listerner = null;
         List<TcpConnection> clients = new List<TcpConnection>();
-
-        public int Port { get; private set; }
-        public IPAddress defaultPortLocalAddress { get; private set; } = IPAddress.Parse("127.0.0.1");
-
-        bool running = true;
-
         public int numberOfClient
         {
             get
@@ -37,6 +31,14 @@ namespace Server
                 }
             }
         }
+
+        public int Port { get; private set; }
+        public IPAddress defaultPortLocalAddress { get; private set; } = IPAddress.Parse("127.0.0.1");
+
+        bool running = true;
+
+        //HeartbeatLogic
+
 
         //Message database
         private readonly ConcurrentQueue<string> broadcastQueue = new();
@@ -65,7 +67,6 @@ namespace Server
 
         async Task AcceptClients()
         {
-
             while (running) 
             {
                 try
