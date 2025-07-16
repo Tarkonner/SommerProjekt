@@ -129,5 +129,22 @@ namespace ServerTests
                 bytes => Assert.Equal(message, Encoding.UTF8.GetString(bytes)));
         }
 
+        [Fact]
+        public async Task RemoveDisconnectetClient()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async Task ReconnectDisconnectClient()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async Task HearHearthbeat()
+        {
+            Assert.True(false);
+        }
     }
 }
