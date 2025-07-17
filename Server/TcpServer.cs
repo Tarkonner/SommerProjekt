@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using CommenCompunents;
 using Connection;
 
 namespace Server
@@ -37,8 +38,8 @@ namespace Server
 
         bool running = true;
 
-        //HeartbeatLogic
-
+        //Heartbeat
+        public Heartbeat heartbeat { get; private set; } = new();
 
         //Message database
         private readonly ConcurrentQueue<string> broadcastQueue = new();
@@ -58,11 +59,22 @@ namespace Server
 
         private async void ServerWork()
         {
-            acceptTask = Task.Run(AcceptClients);
-            broadcastTask = Task.Run(Brodcast);
+            acceptTask = AcceptClients();
+            broadcastTask = Brodcast();      
+            heartbeat.Start();
 
-            // Just wait for the three background loops instead:
-            Task.WaitAll(acceptTask, broadcastTask);
+            try
+            {
+                await Task.WhenAll(acceptTask, broadcastTask, heartbeat.heartbeatTask);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("One or more tasks were cancelled.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error: {ex}");
+            }
         }
 
         async Task AcceptClients()
@@ -149,7 +161,7 @@ namespace Server
         {
             lock (clients)
             {
-                foreach (var client in clients.ToList())
+                foreach (var client in clients)
                 {
                     try
                     {
@@ -170,6 +182,8 @@ namespace Server
             running = false;
 
             listerner?.Stop();
+
+            await heartbeat.StopAsync();
 
             if (acceptTask != null) await acceptTask;
             if (broadcastTask != null) await broadcastTask;

@@ -1,59 +1,78 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CommenCompunents
+﻿namespace CommenCompunents
 {
     public class Heartbeat : IHeartbeatHandler
     {
-    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0);
-    private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0);
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-    public Task heartbeatTask { get; private set; }
-    public int heartbeatIntervalInMiliseconds => 200;
-    public event Action OnHeartbeat;
-    private bool _running;
+        public Task heartbeatTask { get; private set; }
+        public int heartbeatIntervalInMiliseconds { get; set; }
 
-    public void Start()
-    {
-        _running = true;
-        heartbeatTask = HeartbeatLogic(_cts.Token);
-    }
+        public event Action OnHeartbeat;
+        private bool _running;
 
-    public async Task StopAsync()
-    {
-        _cts.Cancel();
-        _running = false;
-        try
+        public void Start(int timeBetweenBeats = 200)
         {
-            await heartbeatTask;
+            heartbeatIntervalInMiliseconds = timeBetweenBeats;
+            _running = true;
+            heartbeatTask = HeartbeatLogic(_cts.Token);
         }
-        catch (OperationCanceledException)
-        {
-            // Expected when stopping
-        }
-        finally
-        {
-            await _semaphore.WaitAsync();
-        }
-    }
 
-    public async Task HeartbeatLogic(CancellationToken cancellationToken)
-    {
-        try
+        public async Task StopAsync()
         {
-            while (_running && !cancellationToken.IsCancellationRequested)
+            _cts.Cancel();
+            _running = false;
+
+            if (heartbeatTask == null)
+                return;
+
+            try
             {
-                await Task.Delay(heartbeatIntervalInMiliseconds, cancellationToken);
-                OnHeartbeat?.Invoke();
+                await heartbeatTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Heartbeat task threw unexpected exception: {ex}");
+                throw;
+            }
+
+            // Ensure we don't deadlock if task exited before reaching _semaphore.Release()
+            try
+            {
+                await _semaphore.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error waiting on semaphore: {ex}");
             }
         }
-        finally
+
+        public async Task HeartbeatLogic(CancellationToken cancellationToken)
         {
-            _semaphore.Release();
+            try
+            {
+                while (_running && !cancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(heartbeatIntervalInMiliseconds, cancellationToken);
+
+                    try
+                    {
+                        OnHeartbeat?.Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error during heartbeat callback: {ex}");
+                    }
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
-    }
     }
 }

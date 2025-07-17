@@ -8,11 +8,11 @@ namespace CommenCompunents
 {
     public interface IHeartbeatHandler
     {
-        int heartbeatIntervalInMiliseconds { get; }
+        int heartbeatIntervalInMiliseconds { get; set; }
 
         event Action OnHeartbeat;
 
-        void Start();
+        void Start(int timeBetweenBeats);
 
         Task HeartbeatLogic(CancellationToken cancellationToken);
 

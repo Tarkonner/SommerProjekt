@@ -1,3 +1,4 @@
+using CommenCompunents;
 using Connection;
 using Server;
 using System.Text;
@@ -80,6 +81,7 @@ namespace ServerTests
             Assert.False(server.serverThread.IsAlive);
             Assert.True(server.acceptTask.IsCompleted);
             Assert.True(server.broadcastTask.IsCompleted);
+            Assert.True(server.heartbeat.heartbeatTask.IsCompleted);
 
             // Cleanup
             await server.DisposeAsync();
@@ -144,7 +146,21 @@ namespace ServerTests
         [Fact]
         public async Task HearHearthbeat()
         {
-            Assert.True(false);
+            TcpServer tcpServer = new TcpServer();
+            await tcpServer.StartAsync();
+
+            int listenTimeMul = 5;
+            int beats = 0;
+            int maxExpectedBeats = listenTimeMul + 1;
+
+            tcpServer.heartbeat.OnHeartbeat += () => { beats++; };
+
+            await Task.Delay(tcpServer.heartbeat.heartbeatIntervalInMiliseconds * listenTimeMul + 200);
+
+            Assert.True(beats <= maxExpectedBeats,
+                $"Expected {listenTimeMul} or {listenTimeMul + 1} beats, but got {beats}");
+
+            await tcpServer.Stop();
         }
     }
 }
