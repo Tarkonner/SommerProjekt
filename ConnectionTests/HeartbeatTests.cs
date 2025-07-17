@@ -9,52 +9,115 @@ namespace HeartbeatTests
 {
     public class HeartbeatTests
     {
+
         [Fact]
-        public async Task StartHeartbeat()
+        public async Task ContinuousHeartbeat()
         {
+            int listenTimeMul = 5;
+            int beats = 0;
+            int maxExpectedBeats = listenTimeMul + 1;
+
             Heartbeat heartbeat = new Heartbeat();
+
+            heartbeat.OnHeartbeat += () => { beats++; };
+
             heartbeat.Start();
 
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * listenTimeMul + 200);
 
+            Assert.True(beats <= maxExpectedBeats,
+                $"Expected {listenTimeMul} or {listenTimeMul + 1} beats, but got {beats}");
+
+            await heartbeat.StopAsync();
         }
+
 
         [Fact]
         public async Task StopHeartbeat()
         {
-            Assert.True(false);
+            int listenTimeMul = 2;
+            int beats = 0;
+            int waitTimeMul = 4;
+
+            int maxExpectedBeats = listenTimeMul + 1;
+
+            Heartbeat heartbeat = new Heartbeat();
+
+            heartbeat.OnHeartbeat += () => { beats++; };
+
+            heartbeat.Start();
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * listenTimeMul + 200);
+
+            await heartbeat.StopAsync();
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * waitTimeMul + 200);
+
+            Assert.True(heartbeat.heartbeatTask.IsCompleted);
+            Assert.True(beats <= maxExpectedBeats,
+                $"Expected {listenTimeMul} or {listenTimeMul + 1} beats, but got {beats}");
+        }
+
+        [Fact]
+        public async Task RestartHeartbeat()
+        {
+            int listenTimeMul = 2;
+            int beats = 0;
+            int waitTimeMul = 4;
+            int maxExpectedBeats = listenTimeMul * 2 + 2;
+
+            Heartbeat heartbeat = new Heartbeat();
+
+            heartbeat.OnHeartbeat += () => { beats++; };
+
+            heartbeat.Start();
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * listenTimeMul + 200);
+
+            await heartbeat.StopAsync();
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * waitTimeMul + 200);
+
+            heartbeat.Start();
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * listenTimeMul + 200);
+
+            Assert.True(beats <= maxExpectedBeats,
+                $"Expected {listenTimeMul} or {listenTimeMul + 1} beats, but got {beats}");
         }
 
         [Fact]
         public async Task ListenToHeartbeat()
         {
-            Assert.True(false);
-        }
+            bool haveBennCalled = false;
 
-        [Fact]
-        public async Task HasOwnTask()
-        {
-            Assert.True(false);
-        }
+            Heartbeat heartbeat = new Heartbeat();
 
-        [Fact]
-        public async Task CanAttachMultipleListeners()
-        {
-            // Should allow multiple subscribers to OnHeartbeat event
-            Assert.True(false);
+            heartbeat.OnHeartbeat += () => { haveBennCalled = true; };
+
+            heartbeat.Start();
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * 2);
+
+            Assert.True(haveBennCalled);
+
+            await heartbeat.StopAsync();
         }
 
         [Fact]
         public async Task DoesNotRaiseEvents_WhenNeverStarted()
         {
-            // Should not raise any heartbeat events unless Start is called
-            Assert.True(false);
-        }
+            int listenTimeMul = 2;
+            int beats = 0;
 
-        [Fact]
-        public async Task RaisesHeartbeatEvent_AtInterval()
-        {
-            // Should raise OnHeartbeat at expected time intervals
-            Assert.True(false);
+            Heartbeat heartbeat = new Heartbeat();
+
+            heartbeat.OnHeartbeat += () => { beats++; };
+
+
+            await Task.Delay(heartbeat.heartbeatIntervalInMiliseconds * listenTimeMul + 200);
+
+            Assert.Equal(0, beats);
         }
     }
 }

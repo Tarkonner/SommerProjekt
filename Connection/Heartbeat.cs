@@ -8,32 +8,52 @@ namespace CommenCompunents
 {
     public class Heartbeat : IHeartbeatHandler
     {
-        public Task heartbeatTask { get; private set; }
+    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0);
+    private readonly CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public int heartbeatIntervalInMiliseconds => 200;
+    public Task heartbeatTask { get; private set; }
+    public int heartbeatIntervalInMiliseconds => 200;
+    public event Action OnHeartbeat;
+    private bool _running;
 
-        public event Action OnHeartbeat;
+    public void Start()
+    {
+        _running = true;
+        heartbeatTask = HeartbeatLogic(_cts.Token);
+    }
 
-        private bool _running;
-
-        public void Start()
+    public async Task StopAsync()
+    {
+        _cts.Cancel();
+        _running = false;
+        try
         {
-            _running = true;
-            heartbeatTask = HeartbeatLogic();
+            await heartbeatTask;
         }
-
-        public void Stop()
+        catch (OperationCanceledException)
         {
-            _running = false;
+            // Expected when stopping
         }
-
-        public async Task HeartbeatLogic()
+        finally
         {
-            while (_running) 
+            await _semaphore.WaitAsync();
+        }
+    }
+
+    public async Task HeartbeatLogic(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (_running && !cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(heartbeatIntervalInMiliseconds);
+                await Task.Delay(heartbeatIntervalInMiliseconds, cancellationToken);
                 OnHeartbeat?.Invoke();
             }
         }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
     }
 }

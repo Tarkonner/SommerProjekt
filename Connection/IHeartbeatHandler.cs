@@ -14,8 +14,8 @@ namespace CommenCompunents
 
         void Start();
 
-        Task HeartbeatLogic();
+        Task HeartbeatLogic(CancellationToken cancellationToken);
 
-        void Stop();
+        Task StopAsync();
     }
 }
