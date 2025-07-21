@@ -2,9 +2,9 @@ using Server;
 
 public class Program()
 {
-    static TcpServer tcpServer;
+    static TcpServer tcpServer = new();
 
-    static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +16,7 @@ public class Program()
 
         var app = builder.Build();
 
-        tcpServer = new TcpServer();
-        tcpServer.StartAsync();
+        await tcpServer.StartAsync();
 
         app.UseDefaultFiles();
         app.UseStaticFiles();

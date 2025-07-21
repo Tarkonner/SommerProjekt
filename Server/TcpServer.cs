@@ -10,10 +10,10 @@ namespace Server
     public class TcpServer : IAsyncDisposable
     {
         //Threads
-        public Thread serverThread { get; private set; }
-        public Task acceptTask { get; private set; }
-        public Task broadcastTask { get; private set; }
-        public Task heartbeatListerner {get; private set; }
+        public Thread serverThread { get; private set; } = null!;
+        public Task acceptTask { get; private set; } = null!;
+        public Task broadcastTask { get; private set; } = null!;
+        public Task heartbeatListerner {get; private set; } = null!;
 
         //Tells then Server is ready to take and sent
         private readonly TaskCompletionSource<bool> _acceptReady = new();
@@ -21,7 +21,7 @@ namespace Server
         private Task ServerReady => Task.WhenAll(_acceptReady.Task, _broadcastReady.Task);
 
         //Clients
-        TcpListener listerner = null;
+        TcpListener listerner = null!;
         List<TcpConnection> clients = new List<TcpConnection>();
         public int numberOfClient
         {
@@ -96,11 +96,6 @@ namespace Server
 
                     _ = HandleClientAsync(connection);
                 }
-                catch (SocketException ex) when (!running)
-                {
-                    // Expected when listener is stopped
-                    break;
-                }
                 catch (ObjectDisposedException) when (!running)
                 {
                     // Also expected if listener is disposed
@@ -159,26 +154,33 @@ namespace Server
 
         public async Task ListenToHeartbets()
         {
-
+            await Task.Delay(1);
         }
         public async Task BroadcastMessage(string message)
         {
+            //Can give problem if there is to many clients
+
+            var clientsSnapshot = new List<TcpConnection>();
             lock (clients)
             {
-                foreach (var client in clients)
+                clientsSnapshot.AddRange(clients);
+            }
+
+            var broadcastTasks = clientsSnapshot
+                .Select(async client =>
                 {
                     try
                     {
                         var data = Encoding.UTF8.GetBytes(message);
-                        client.SendAsync(data);
+                        await client.SendAsync(data);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Broadcast failed to client: {ex.Message}");
-                        // Consider removing failed client
                     }
-                }
-            }
+                });
+
+            await Task.WhenAll(broadcastTasks);
         }
 
         public async ValueTask DisposeAsync()
@@ -200,7 +202,7 @@ namespace Server
             clients.Clear();
         }
 
-        public async void DisconnectClient(object? sender, TcpConnectionEventArgs e)
+        public void DisconnectClient(object? sender, TcpConnectionEventArgs e)
         {
             lock (clients)
             {

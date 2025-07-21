@@ -10,7 +10,7 @@ namespace Connection
     {
         public bool IsConnected { get; private set; }
         public List<byte[]> SentData { get; } = new();
-        public byte[] LastReceivedData { get; set; }
+        public byte[] LastReceivedData { get; set; } = new byte[1024];
         public bool IsDisposed { get; private set; }
 
         // Async Connect

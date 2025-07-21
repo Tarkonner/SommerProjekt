@@ -138,21 +138,21 @@ namespace Connection
             if (client?.Connected ?? false)
             {
                 client.Close();
-                stream = null;
-                client = null;
+                stream.Close();
+                client.Close();
             }
 
             if (stream != null)
             {
                 await stream.DisposeAsync();
-                stream = null;
+                stream.Close();
             }
 
             if (client != null)
             {
                 client.Close();     // Gracefully close connection
                 client.Dispose();   // Dispose unmanaged resources
-                client = null;
+                client.Close();
             }
         }
     }

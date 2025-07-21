@@ -9,17 +9,22 @@ namespace ConnectionTests
     {
         private TcpListener _listener;
         private CancellationTokenSource _cts;
-        private Task acceptTask;
+        private Task? acceptTask;
 
         public List<TcpConnection> clients { get; private set; } = new List<TcpConnection>();
         public List<string> messages { get; private set; } = new List<string>();
+
+        public ServerToConnectionTest()
+        {
+            _listener = new TcpListener(IPAddress.Loopback, 0); // Initialize with any available port
+            _cts = new CancellationTokenSource();
+        }
 
         public Task StartListeningAsync(int port)
         {
             _listener = new TcpListener(IPAddress.Loopback, port);
             _listener.Start();
 
-            _cts = new CancellationTokenSource();
             acceptTask = AcceptClientsAsync(_cts.Token);
 
             return Task.CompletedTask;
