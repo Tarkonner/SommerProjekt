@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj" />
+    <ProjectReference Include="..\Connection\CommenCompunents.csproj" />
     <ProjectReference Include="..\Server\Server.csproj" />
   </ItemGroup>
 

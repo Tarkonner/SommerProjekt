@@ -10,10 +10,10 @@ namespace Connection
 
         public CancellationTokenSource cancelToken { get; private set; } = new();
 
-        public NetworkStream stream { get; private set; }
-        public TcpClient client { get; private set; }
+        public NetworkStream stream { get; private set; } = null!;
+        public TcpClient client { get; private set; } = null!;
 
-        private byte[] reciveBuffer;
+        private byte[] reciveBuffer = new byte[1024];
 
 
         public TcpConnection(TcpClient existingClient)
@@ -22,7 +22,7 @@ namespace Connection
             stream = client.GetStream();
         }
 
-        public TcpConnection()
+        public TcpConnection() 
         {
         }
 
