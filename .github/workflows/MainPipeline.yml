@@ -29,8 +29,7 @@ jobs:
     - name: Run unit tests
       run: |
         dotnet test ./ServerTests/ServerTests.csproj
-        dotnet test ./CommenCompunentTests/HeartbeatTests
-        dotnet test ./CommenCompunentTests/ConnectionTests
+        dotnet test ./CommenCompunents/CommenCompunents.csproj
       # dotnet test ./ClientTests/ClientTests.csproj
 
     # Docker server image build
