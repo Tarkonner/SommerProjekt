@@ -13,6 +13,7 @@ namespace Server
         public Thread serverThread { get; private set; }
         public Task acceptTask { get; private set; }
         public Task broadcastTask { get; private set; }
+        public Task heartbeatListerner {get; private set; }
 
         //Tells then Server is ready to take and sent
         private readonly TaskCompletionSource<bool> _acceptReady = new();
@@ -156,7 +157,10 @@ namespace Server
             }
         }
 
+        public async Task ListenToHeartbets()
+        {
 
+        }
         public async Task BroadcastMessage(string message)
         {
             lock (clients)

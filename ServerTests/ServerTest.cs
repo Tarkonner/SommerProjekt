@@ -144,6 +144,34 @@ namespace ServerTests
         }
 
         [Fact]
+        public async Task FindAClientsHeartbet()
+        {
+            TcpServer tcpServer = new();
+                        
+            await tcpServer.StartAsync();
+
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async Task FindMultipulHeartbets()
+        {
+            Assert.True(false);   
+        }
+
+        [Fact]
+        public async Task ClientCanHearServerHeartbets()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async Task MultipulClientsCanHearServerHeartbets()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
         public async Task HearHearthbeat()
         {
             TcpServer tcpServer = new TcpServer();
