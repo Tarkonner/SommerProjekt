@@ -25,11 +25,14 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore
 
+    - name: List project files
+      run: find . -name "*.csproj"
+
     # Run unit tests                                 
     - name: Run unit tests
       run: |
         dotnet test ./ServerTests/ServerTests.csproj
-        dotnet test ./CommenCompunents/CommenCompunents.csproj
+        dotnet test ./Connection/CommenCompunents.csproj
       # dotnet test ./ClientTests/ClientTests.csproj
 
     # Docker server image build
