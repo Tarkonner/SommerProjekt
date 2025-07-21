@@ -1,9 +1,12 @@
-﻿namespace CommenCompunents
+﻿using Connection;
+
+namespace CommenCompunents
 {
     public class Heartbeat : IHeartbeatHandler
     {
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(0);
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+
 
         public Task heartbeatTask { get; private set; }
         public int heartbeatIntervalInMiliseconds { get; set; }
@@ -13,6 +16,9 @@
 
         public void Start(int timeBetweenBeats = 200)
         {
+            if (_running)
+                throw new InvalidOperationException("Heartbeat is already running");
+
             heartbeatIntervalInMiliseconds = timeBetweenBeats;
             _running = true;
             heartbeatTask = HeartbeatLogic(_cts.Token);
@@ -20,8 +26,11 @@
 
         public async Task StopAsync()
         {
-            _cts.Cancel();
+            if (!_running)
+                return;
+
             _running = false;
+            _cts.Cancel();
 
             if (heartbeatTask == null)
                 return;

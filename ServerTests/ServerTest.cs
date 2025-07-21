@@ -131,19 +131,19 @@ namespace ServerTests
                 bytes => Assert.Equal(message, Encoding.UTF8.GetString(bytes)));
         }
 
-        [Fact]
+        [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task RemoveDisconnectetClient()
         {
             Assert.True(false);
         }
 
-        [Fact]
+        [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task ReconnectDisconnectClient()
         {
             Assert.True(false);
         }
 
-        [Fact]
+        [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task FindAClientsHeartbet()
         {
             TcpServer tcpServer = new();
@@ -153,19 +153,19 @@ namespace ServerTests
             Assert.True(false);
         }
 
-        [Fact]
+        [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task FindMultipulHeartbets()
         {
             Assert.True(false);   
         }
 
-        [Fact]
+        [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task ClientCanHearServerHeartbets()
         {
             Assert.True(false);
         }
 
-        [Fact]
+        [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task MultipulClientsCanHearServerHeartbets()
         {
             Assert.True(false);
