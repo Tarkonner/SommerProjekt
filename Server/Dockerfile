@@ -9,6 +9,7 @@ WORKDIR /src
 
 # Copy only the project file (no Server/ prefix)
 COPY ["Server.csproj", "./"]
+COPY ["Connection/CommenCompunents.csproj", "Connection/"]
 RUN dotnet restore "Server.csproj"
 
 # Copy all source files inside current context
