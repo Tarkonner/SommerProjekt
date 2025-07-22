@@ -41,7 +41,7 @@ public class Program()
 
     public async void StopServer()
     {
-        await tcpServer.Stop();
+        await tcpServer.DisposeAsync();
     }
 }
 

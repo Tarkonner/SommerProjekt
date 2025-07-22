@@ -1,4 +1,3 @@
-using CommenCompunents;
 using Connection;
 using Server;
 using System.Text;
@@ -30,6 +29,7 @@ namespace ServerTests
             Assert.Equal(1, tcpServer.numberOfClient);
 
             await tcpServer.DisposeAsync();
+            await client.DisposeAsync();
         }
 
         [Fact]
@@ -46,6 +46,8 @@ namespace ServerTests
             Assert.Equal(2, tcpServer.numberOfClient);
 
             await tcpServer.DisposeAsync();
+            await client1.DisposeAsync();
+            await client2.DisposeAsync();
         }
         [Fact]
         async Task ClientCanDisconnect()
@@ -58,7 +60,7 @@ namespace ServerTests
 
             await client.DisposeAsync();
 
-            Thread.Sleep(100);
+            await Task.Delay(100);
 
             Assert.Equal(0, tcpServer.numberOfClient);
 
@@ -73,18 +75,15 @@ namespace ServerTests
             await server.StartAsync();
 
             // Act
-            await server.Stop();
+            await server.DisposeAsync();
 
-            Thread.Sleep(100);
+            await Task.Delay(100);
 
             // Assert - Check thread states before disposal
             Assert.False(server.serverThread.IsAlive);
             Assert.True(server.acceptTask.IsCompleted);
             Assert.True(server.broadcastTask.IsCompleted);
             Assert.True(server.heartbeat.heartbeatTask.IsCompleted);
-
-            // Cleanup
-            await server.DisposeAsync();
         }
 
         [Fact]
@@ -103,6 +102,9 @@ namespace ServerTests
             var gottenMessage = await client.ReceiveAsync();
 
             Assert.Equal(message, Encoding.UTF8.GetString(gottenMessage));
+
+            await tcpServer.DisposeAsync();
+            await client.DisposeAsync();
         }
 
         [Fact]
@@ -110,14 +112,13 @@ namespace ServerTests
         {
             string message = "Hello world";
 
-            TcpServer tcpServer = new TcpServer();
+            var tcpServer = new TcpServer();
             await tcpServer.StartAsync();
 
-            TcpConnection c1 = new TcpConnection();
+            var c1 = new TcpConnection();
+            var c2 = new TcpConnection();
             await c1.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
-            TcpConnection c2 = new TcpConnection();
             await c2.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
-
 
             var receiveTasks = new[]
             {
@@ -127,10 +128,24 @@ namespace ServerTests
 
             await tcpServer.BroadcastMessage(message);
 
-            byte[][] payloads = await Task.WhenAll(receiveTasks);
+            // Set a timeout to prevent hanging tests
+            var timeoutTask = Task.Delay(1000);
+            var allReceiveTask = Task.WhenAll(receiveTasks);
 
+            var completedTask = await Task.WhenAny(allReceiveTask, timeoutTask);
+
+            Assert.True(completedTask == allReceiveTask, "Receive timed out");
+
+            var payloads = await allReceiveTask;
+
+            // Verify both received the same message
             Assert.All(payloads,
                 bytes => Assert.Equal(message, Encoding.UTF8.GetString(bytes)));
+
+            // Clean up
+            await c1.DisposeAsync();
+            await c2.DisposeAsync();
+            await tcpServer.DisposeAsync();
         }
 
         [Fact(Skip = "WIP: Heartbeat implementation pending")]
@@ -149,7 +164,7 @@ namespace ServerTests
         public async Task FindAClientsHeartbet()
         {
             TcpServer tcpServer = new();
-                        
+
             await tcpServer.StartAsync();
 
             Assert.True(false);
@@ -158,7 +173,7 @@ namespace ServerTests
         [Fact(Skip = "WIP: Heartbeat implementation pending")]
         public async Task FindMultipulHeartbets()
         {
-            Assert.True(false);   
+            Assert.True(false);
         }
 
         [Fact(Skip = "WIP: Heartbeat implementation pending")]
@@ -190,7 +205,7 @@ namespace ServerTests
             Assert.True(beats <= maxExpectedBeats,
                 $"Expected {listenTimeMul} or {listenTimeMul + 1} beats, but got {beats}");
 
-            await tcpServer.Stop();
+            await tcpServer.DisposeAsync();
         }
     }
 }

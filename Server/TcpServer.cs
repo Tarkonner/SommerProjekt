@@ -209,16 +209,6 @@ namespace Server
                 clients.Remove(e.Connection);
             }
             e.Connection.goingToDisconnect -= DisconnectClient;
-        }
-
-
-        public async Task Stop ()
-        {
-            await DisposeAsync();
-
-            await Task.Delay(TimeSpan.FromSeconds(1));
-        }
-
-        
+        }        
     }
 }
