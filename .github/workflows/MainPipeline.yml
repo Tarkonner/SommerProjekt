@@ -44,7 +44,6 @@ jobs:
         cd Server
         docker buildx build --platform linux/amd64,linux/arm64 \
           --tag my-server:latest \
-          --load \
           --push \
           .
 
@@ -54,7 +53,6 @@ jobs:
         cd Client
         docker buildx build --platform linux/amd64,linux/arm64 \
           --tag my-client:latest \
-          --load \
           --push \
           .
 
