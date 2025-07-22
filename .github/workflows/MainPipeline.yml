@@ -58,8 +58,8 @@ jobs:
     # Docker server image build
     - name: Build server Docker image
       run: |
-        cd Server
         docker buildx build --platform linux/amd64,linux/arm64 \
+          -f Server/Dockerfile \
           --tag my-server:latest \
           --push \
           .
@@ -67,8 +67,8 @@ jobs:
     # Docker client image build
     - name: Build client Docker image
       run: |
-        cd Client
         docker buildx build --platform linux/amd64,linux/arm64 \
+          -f Client/Dockerfile \
           --tag my-client:latest \
           --push \
           .
