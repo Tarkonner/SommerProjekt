@@ -58,19 +58,21 @@ jobs:
     # Docker server image build
     - name: Build server Docker image
       run: |
-        docker buildx build --platform linux/amd64,linux/arm64 \
+        docker buildx build --platform linux/amd64 \
           -f Server/Dockerfile \
           --tag my-server:latest \
+          --load \
           .
 
     # Docker client image build
     - name: Build client Docker image
       run: |
-        docker buildx build --platform linux/amd64,linux/arm64 \
+        docker buildx build --platform linux/amd64 \
           -f Client/Dockerfile \
           --tag my-client:latest \
+          --load \
           .
-
+          
     # Create Docker network for communication
     - name: Create Docker network
       run: docker network create test-net
