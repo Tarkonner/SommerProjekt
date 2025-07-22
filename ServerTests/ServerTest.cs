@@ -100,7 +100,9 @@ namespace ServerTests
 
             await tcpServer.BroadcastMessage(message);
 
-            byte[] gottenMessage = await client.ReceiveAsync();
+            var gottenMessage = await client.ReceiveAsync();
+
+            Assert.Equal(message, Encoding.UTF8.GetString(gottenMessage));
         }
 
         [Fact]
