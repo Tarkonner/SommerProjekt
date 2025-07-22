@@ -61,7 +61,6 @@ jobs:
         docker buildx build --platform linux/amd64,linux/arm64 \
           -f Server/Dockerfile \
           --tag my-server:latest \
-          --push \
           .
 
     # Docker client image build
@@ -70,7 +69,6 @@ jobs:
         docker buildx build --platform linux/amd64,linux/arm64 \
           -f Client/Dockerfile \
           --tag my-client:latest \
-          --push \
           .
 
     # Create Docker network for communication
