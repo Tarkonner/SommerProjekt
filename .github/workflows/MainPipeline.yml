@@ -24,13 +24,6 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
-    # Dependecis
-    - name: Restore Dependencies
-      run: |
-        dotnet restore ./Server/Server.csproj
-        dotnet restore ./Client/Client.csproj
-        dotnet restore ../Connection/CommenCompunents.csproj
-
     # Restore NuGet packages                         
     - name: Restore Dependencies
       run: dotnet restore
