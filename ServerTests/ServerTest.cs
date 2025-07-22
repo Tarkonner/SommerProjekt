@@ -97,11 +97,22 @@ namespace ServerTests
             TcpConnection client = new TcpConnection();
             await client.Connect(tcpServer.defaultPortLocalAddress.ToString(), tcpServer.Port);
 
+            // Optional: Wait a bit to ensure client is connected
+            await Task.Delay(100);
+
             await tcpServer.BroadcastMessage(message);
 
-            var gottenMessage = await client.ReceiveAsync();
-
-            Assert.Equal(message, Encoding.UTF8.GetString(gottenMessage));
+            // Add timeout to avoid hanging indefinitely
+            var receiveTask = client.ReceiveAsync();
+            if (await Task.WhenAny(receiveTask, Task.Delay(2000)) == receiveTask)
+            {
+                var gottenMessage = await receiveTask;
+                Assert.Equal(message, Encoding.UTF8.GetString(gottenMessage));
+            }
+            else
+            {
+                Assert.Fail("Timed out waiting for broadcast message.");
+            }
 
             await tcpServer.DisposeAsync();
             await client.DisposeAsync();
