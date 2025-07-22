@@ -50,7 +50,7 @@ namespace Connection
             try
             {
                 if(cancelToken.IsCancellationRequested)
-                    throw new InvalidOperationException("Connection canclet");
+                    throw new InvalidOperationException("Connection canceled");
 
                 if (stream == null)
                     throw new InvalidOperationException("Not connected");
@@ -76,7 +76,7 @@ namespace Connection
                 throw new InvalidOperationException("Not connected");
 
             if (cancelToken.IsCancellationRequested)
-                throw new InvalidOperationException("Connection canclet");
+                throw new InvalidOperationException("Connection canceled");
 
             try
             {

@@ -140,7 +140,7 @@ namespace ConnectionTests
                 var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
                     connection.ReceiveAsync());
 
-                Assert.Equal("Not connected", ex.Message);
+                Assert.Equal("Connection canceled", ex.Message);
             }
             finally
             {
