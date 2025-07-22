@@ -32,10 +32,10 @@ jobs:
       run: find . -name "*.csproj"
 
     # Run unit tests                                 
-    - name: Run unit tests
+    - name: Run unit tests with detailed logging
       run: |
-        dotnet test ./ServerTests/ServerTests.csproj
-        dotnet test ./ConnectionTests/CommenCompunentTests.csproj
+        dotnet test ./ServerTests/ServerTests.csproj --logger:"console;verbosity=detailed" --blame
+        dotnet test ./ConnectionTests/CommenCompunentTests.csproj --logger:"console;verbosity=detailed" --blame
       # dotnet test ./ClientTests/ClientTests.csproj
 
     # Docker server image build
