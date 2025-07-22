@@ -38,6 +38,23 @@ jobs:
         dotnet test ./ConnectionTests/CommenCompunentTests.csproj --logger:"console;verbosity=detailed" --blame
       # dotnet test ./ClientTests/ClientTests.csproj
 
+    # Set up QEMU (required for multi-platform builds)
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: all
+
+    # Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        install: true
+        driver: docker-container
+
+    # Optional: Inspect Buildx builder
+    - name: Inspect Buildx builder
+      run: docker buildx ls
+
     # Docker server image build
     - name: Build server Docker image
       run: |
