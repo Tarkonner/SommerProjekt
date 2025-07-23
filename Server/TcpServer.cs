@@ -94,6 +94,29 @@ namespace Server
                         clients.Add(connection);
                     }
 
+                    //Handshake
+                    byte[] buffer = new byte[HandshakeMessage.clientMessage.Length];
+                    // 1. Read handshake
+                    int offset = 0;
+                    while (offset < buffer.Length)
+                    {
+                        int read = await connection.stream.ReadAsync(buffer, offset, buffer.Length - offset);
+                        if (read == 0)
+                            throw new IOException("Client disconnected during handshake");
+                        offset += read;
+                    }
+
+                    // 2. Verify magic bytes
+                    for (int i = 0; i < HandshakeMessage.clientMessage.Length; i++)
+                    {
+                        if (buffer[i] != HandshakeMessage.clientMessage[i])
+                            throw new IOException("Invalid client handshake");
+                    }
+
+                    // 3. Send confirmation
+                    await connection.stream.WriteAsync(HandshakeMessage.serverMessage, 0, HandshakeMessage.serverMessage.Length);
+                    await connection.stream.FlushAsync();
+
                     _ = HandleClientAsync(connection);
                 }
                 catch (ObjectDisposedException) when (!running)
@@ -148,7 +171,7 @@ namespace Server
                 }
 
                 // Throttle broadcasts to prevent overload
-                await Task.Delay(100);
+                await Task.Delay(1);
             }
         }
 

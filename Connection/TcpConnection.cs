@@ -15,6 +15,9 @@ namespace Connection
 
         private byte[] reciveBuffer = new byte[1024];
 
+        //Handshake
+
+
 
         public TcpConnection(TcpClient existingClient)
         {
@@ -30,7 +33,8 @@ namespace Connection
         {
             if (client != null)
                 throw new InvalidOperationException("Already connected.");
-
+                      
+            //Connect to server
             try
             {
                 client = new TcpClient();
@@ -41,6 +45,29 @@ namespace Connection
             {
                 goingToDisconnect?.Invoke(this, new TcpConnectionEventArgs(this));
                 throw new Exception(ex.Message);
+            }
+
+            //Handshake with server
+            byte[] responseBuffer = new byte[HandshakeMessage.serverMessage.Length];
+            // 1. Send magic to server
+            await stream.WriteAsync(HandshakeMessage.clientMessage, 0, HandshakeMessage.clientMessage.Length);
+            await stream.FlushAsync();
+
+            // 2. Receive server response
+            int offset = 0;
+            while (offset < responseBuffer.Length)
+            {
+                int bytesRead = await stream.ReadAsync(responseBuffer, offset, responseBuffer.Length - offset);
+                if (bytesRead == 0)
+                    throw new IOException("Connection closed during handshake");
+                offset += bytesRead;
+            }
+
+            // 3. Verify response
+            for (int i = 0; i < HandshakeMessage.serverMessage.Length; i++)
+            {
+                if (responseBuffer[i] != HandshakeMessage.serverMessage[i])
+                    throw new IOException("Invalid handshake response");
             }
         }
 
