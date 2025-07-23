@@ -147,5 +147,70 @@ namespace ConnectionTests
                 await connection.DisposeAsync();
             }
         }
+
+        [Fact]
+        public async Task Connect_PerformsSuccessfulHandshake()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+            // Server task: simulate correct handshake
+            var serverTask = Task.Run(async () =>
+            {
+                using var serverClient = await listener.AcceptTcpClientAsync();
+                using var stream = serverClient.GetStream();
+
+                byte[] expectedClientMagic = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF };
+                byte[] response = new byte[] { 0xCA, 0xFE, 0xBA, 0xBE };
+
+                var buffer = new byte[expectedClientMagic.Length];
+                int offset = 0;
+                while (offset < buffer.Length)
+                    offset += await stream.ReadAsync(buffer, offset, buffer.Length - offset);
+
+                // Optional: assert client sent correct handshake
+                Assert.Equal(expectedClientMagic, buffer);
+
+                await stream.WriteAsync(response, 0, response.Length);
+                await stream.FlushAsync();
+            });
+
+            var client = new TcpConnection();
+            await client.Connect("127.0.0.1", port);
+
+            await client.DisposeAsync();
+            listener.Stop();
+            await serverTask;
+        }
+
+        [Fact]
+        public async Task Connect_ThrowsIfServerHandshakeFails()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+            // Server sends wrong response
+            var serverTask = Task.Run(async () =>
+            {
+                using var serverClient = await listener.AcceptTcpClientAsync();
+                using var stream = serverClient.GetStream();
+
+                byte[] dummy = new byte[4];
+                await stream.ReadAsync(dummy, 0, dummy.Length); // just read whatever client sends
+                await stream.WriteAsync(new byte[] { 0x00, 0x00, 0x00, 0x00 }); // wrong response
+                await stream.FlushAsync();
+            });
+
+            var client = new TcpConnection();
+
+            var ex = await Assert.ThrowsAsync<IOException>(() => client.Connect("127.0.0.1", port));
+            Assert.Contains("Invalid handshake response", ex.Message);
+
+            await client.DisposeAsync();
+            listener.Stop();
+            await serverTask;
+        }
     }
 }
